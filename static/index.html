@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=edvice-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Go Websocket Tutorial</title>
+    </head>
+    <body>
+        <h2>Hello World</h2>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+        <script>
+            const socket = io('http://localhost:5000/socket.io/');
+            var s2 = io("/chat");
+            s2.emit('msg', 'mensagem', function(data){
+                console.log(data);
+            });
+            //socket.emit('msg', 'noticeTest');
+            socket.emit('notice', 'hello world');
+        </script>
+    </body>
+</html>

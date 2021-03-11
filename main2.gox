@@ -1,0 +1,113 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"golang.org/x/sync/errgroup"
+	"gopkg.in/olahol/melody.v1"
+)
+
+var (
+	g errgroup.Group
+)
+
+func router01() http.Handler {
+	e := gin.New()
+	e.Use(gin.Recovery())
+	e.GET("/", func(c *gin.Context) {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"code":  http.StatusOK,
+				"error": "Welcome server 01",
+			},
+		)
+	})
+
+	return e
+}
+
+func router02() http.Handler {
+	e := gin.New()
+	e.Use(gin.Recovery())
+	e.GET("/", func(c *gin.Context) {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"code":  http.StatusOK,
+				"error": "Welcome server 02",
+			},
+		)
+	})
+
+	return e
+}
+
+func wsRoute01() http.Handler {
+	r := gin.New()
+	m := melody.New()
+
+	r.GET("/ws", func(c *gin.Context) {
+		m.HandleRequest(c.Writer, c.Request)
+	})
+
+	m.HandleMessage(func(s *melody.Session, msg []byte) {
+		fmt.Println(string(msg))
+		m.Broadcast(msg)
+	})
+
+	m.HandleConnect(func(s *melody.Session) {
+		fmt.Println("Connected!")
+		fmt.Println(s.Request.URL)
+		fmt.Println(s.Request.Header)
+	})
+
+	m.HandleDisconnect(func(s *melody.Session) {
+		fmt.Println("Closed!")
+	})
+
+	return r
+}
+
+func main() {
+	server01 := &http.Server{
+		Addr:         ":8081",
+		Handler:      router01(),
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	server02 := &http.Server{
+		Addr:         ":8082",
+		Handler:      router02(),
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	wsServer01 := &http.Server{
+		Addr:         ":5000",
+		Handler:      wsRoute01(),
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	g.Go(func() error {
+		return server01.ListenAndServe()
+	})
+
+	g.Go(func() error {
+		return server02.ListenAndServe()
+	})
+
+	g.Go(func() error {
+		return wsServer01.ListenAndServe()
+	})
+
+	if err := g.Wait(); err != nil {
+		log.Fatal(err)
+	}
+}
