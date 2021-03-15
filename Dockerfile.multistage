@@ -20,14 +20,18 @@ RUN CGO_ENABLED=0 go test -v
 RUN go build -o ./out/go-app .
 
 # Start fresh from a smaller image
-FROM alpine:3.9 
-RUN apk add ca-certificates
+FROM alpine:3.9 AS base
 
+RUN apk add ca-certificates
 
 COPY --from=build_base /tmp/go-app/out/go-app /app/go-app
 
-# This container exposes port 8080 to the outside world
-EXPOSE 5000
+FROM base
+ARG port
+ENV PORT=$port
+RUN echo "PORT: $PORT"
+# This container exposes PORT 8080 to the outside world
+EXPOSE $PORT
 
 # Run the binary program produced by `go install`
 CMD ["/app/go-app"]

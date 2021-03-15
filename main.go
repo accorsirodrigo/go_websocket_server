@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -35,6 +36,8 @@ type lampBroadcast struct {
 }
 
 func main() {
+	port := os.Getenv("PORT")
+	fmt.Println(port)
 	//gin.SetMode(gin.ReleaseMode)
 
 	r := gin.Default()
@@ -100,7 +103,7 @@ func main() {
 		fmt.Println("Closed!")
 	})
 
-	r.Run(":5000")
+	r.Run(":" + port)
 }
 
 func tryit() {
